@@ -5,6 +5,13 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting database seed...')
 
+  // Check if data already exists (for production re-deployments)
+  const existingUser = await prisma.user.findFirst()
+  if (existingUser) {
+    console.log('📊 Database already seeded. Skipping seeding process...')
+    return
+  }
+
   // Create demo user
   const user = await prisma.user.upsert({
     where: { email: 'alex@example.com' },
