@@ -1,5 +1,3 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import type { UpcomingInterview } from "@/lib/dashboard-data";
 

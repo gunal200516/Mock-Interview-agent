@@ -97,6 +97,34 @@ page; click the sidebar to walk through the stub routes.
 
 ---
 
+## Performance
+
+The dashboard is tuned for fast initial load and navigation:
+
+- **Server Components by default** — the Dashboard route (`src/app/page.tsx`) is a Server Component. Stat cards, the interviews list, and the applications table are rendered on the server and ship **zero client JavaScript**. Only the Sidebar and topbar (which need `usePathname` for the active link + page title) are Client Components.
+- **Lazy-loaded chart** — Recharts (~150 KB) is code-split via `next/dynamic` with `ssr: false` in `src/components/dashboard/chart-lazy.tsx`. The initial HTML contains a skeleton placeholder; the chart library downloads after hydration and swaps in. This keeps the initial bundle small and FCP fast.
+- **Static generation** — every route exports `export const dynamic = "force-static"`. All 8 pages are pre-rendered at build time and served from the CDN edge cache — no per-request server work, no database calls.
+- **Geist via `next/font`** — the typeface is self-hosted and preloaded, no third-party font requests.
+- **Tailwind CSS 4** — utility classes purged to only what's used; no runtime CSS.
+
+### Component boundaries
+
+| Component          | Server / Client | Why                                  |
+| ------------------ | --------------- | ------------------------------------ |
+| `layout.tsx`       | Server          | Static shell, fonts, metadata        |
+| `page.tsx`         | Server          | Composes server children + client shell |
+| `DashboardShell`   | Client          | Needs `usePathname` for topbar title |
+| `Sidebar`          | Client          | Needs `usePathname` for active link  |
+| `StatCard`         | Server          | Pure presentational                  |
+| `UpcomingInterviewItem` | Server     | Pure presentational                  |
+| `RecentApplicationsTable` | Server     | Pure presentational                  |
+| `StatusPill`       | Server          | Pure presentational                  |
+| `ChartLazy`        | Client          | Wraps `next/dynamic` with `ssr:false`|
+| `WeeklyActivityChart` | Client       | Recharts requires client DOM         |
+| `StubPage`         | Server          | Pure presentational, renders shell   |
+
+---
+
 ## Customizing the data
 
 Every number, name, and status on the dashboard is sourced from a single file:

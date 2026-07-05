@@ -1,5 +1,7 @@
 import { StubPage } from "@/components/dashboard/stub-page";
 
+export const dynamic = "force-static";
+
 export default function MockInterviewPage() {
   return (
     <StubPage

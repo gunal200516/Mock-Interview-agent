@@ -1,8 +1,6 @@
-"use client";
-
 import { DashboardShell } from "@/components/dashboard/shell";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { WeeklyActivityChart } from "@/components/dashboard/weekly-activity-chart";
+import { ChartLazy } from "@/components/dashboard/chart-lazy";
 import { UpcomingInterviewItem } from "@/components/dashboard/upcoming-interview-item";
 import { RecentApplicationsTable } from "@/components/dashboard/recent-applications-table";
 import {
@@ -10,6 +8,10 @@ import {
   upcomingInterviews,
   dashboardHeadline,
 } from "@/lib/dashboard-data";
+
+// All data is mock + static — pre-render at build time and serve from the
+// CDN edge cache. No per-request work.
+export const dynamic = "force-static";
 
 export default function DashboardPage() {
   return (
@@ -25,7 +27,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Stat cards */}
+        {/* Stat cards — server-rendered, zero client JS */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
             <StatCard key={stat.id} stat={stat} />
@@ -34,7 +36,7 @@ export default function DashboardPage() {
 
         {/* Chart + Upcoming interviews */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Weekly Activity */}
+          {/* Weekly Activity — chart library lazy-loaded on the client */}
           <div className="flex flex-col rounded-xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold text-foreground">
@@ -44,10 +46,10 @@ export default function DashboardPage() {
                 This Week
               </span>
             </div>
-            <WeeklyActivityChart />
+            <ChartLazy />
           </div>
 
-          {/* Upcoming Interviews */}
+          {/* Upcoming Interviews — server-rendered */}
           <div className="flex flex-col rounded-xl border border-border bg-card p-5">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="text-base font-semibold text-foreground">
@@ -65,7 +67,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Applications table */}
+        {/* Recent Applications table — server-rendered */}
         <RecentApplicationsTable />
       </div>
     </DashboardShell>
