@@ -1,18 +1,25 @@
-import { StubPage } from "@/components/dashboard/stub-page";
+import { DashboardShell } from "@/components/dashboard/shell";
+import { ChatInterface } from "@/components/chat/chat-interface";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default function ChatPage() {
   return (
-    <StubPage
-      title="Chat with AI Mentor"
-      description="Ask anything about IBD recruiting, technicals, behavioral prep, or your application strategy — your AI mentor remembers your context."
-      iconName="message-circle"
-      features={[
-        "Voice + text chat with persistent memory of your prep history",
-        "Curated answers grounded in IBD-specific knowledge (M&A, RX, coverage)",
-        "Inline practice prompts that link back to Mock Interview",
-      ]}
-    />
+    <DashboardShell>
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6 h-full">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Chat with AI Mentor
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Ask anything about IBD recruiting, technicals, behavioral prep, or your application strategy — your AI mentor remembers your context.
+          </p>
+        </div>
+        
+        <div className="flex-1 min-h-0">
+          <ChatInterface />
+        </div>
+      </div>
+    </DashboardShell>
   );
 }

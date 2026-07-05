@@ -1,18 +1,23 @@
-import { StubPage } from "@/components/dashboard/stub-page";
+import { DashboardShell } from "@/components/dashboard/shell";
+import { MockInterviewInterface } from "@/components/mock-interview/mock-interview-interface";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default function MockInterviewPage() {
   return (
-    <StubPage
-      title="Mock Interview"
-      description="Run realistic, role-targeted mock interviews with AI interviewers — get a rubric-based score and transcript review."
-      iconName="mic"
-      features={[
-        "3 pending mock interviews waiting for you (see sidebar badge)",
-        "Roles: IBD Technical, PE Behavioral, RX Case Study, and more",
-        "Rubric scoring across technical accuracy, structuring, and presence",
-      ]}
-    />
+    <DashboardShell>
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Mock Interview
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Run realistic, role-targeted mock interviews with AI interviewers — get a rubric-based score and transcript review.
+          </p>
+        </div>
+        
+        <MockInterviewInterface />
+      </div>
+    </DashboardShell>
   );
 }

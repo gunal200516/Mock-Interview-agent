@@ -1,18 +1,23 @@
-import { StubPage } from "@/components/dashboard/stub-page";
+import { DashboardShell } from "@/components/dashboard/shell";
+import { MarketInsightsInterface } from "@/components/insights/market-insights-interface";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default function InsightsPage() {
   return (
-    <StubPage
-      title="Market Insights"
-      description="Live league tables, deal flow trends, and hiring signals across bulge brackets, elite boutiques, and PE shops."
-      iconName="line-chart"
-      features={[
-        "Quarterly M&A league tables by region and sector",
-        "Hiring signals: which desks are growing, which are freezing",
-        "Salary + bonus benchmarks by firm, role, and cohort year",
-      ]}
-    />
+    <DashboardShell>
+      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Market Insights
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Live league tables, deal flow trends, and hiring signals across bulge brackets, elite boutiques, and PE shops.
+          </p>
+        </div>
+        
+        <MarketInsightsInterface />
+      </div>
+    </DashboardShell>
   );
 }

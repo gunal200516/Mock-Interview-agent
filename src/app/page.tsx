@@ -3,6 +3,9 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { ChartLazy } from "@/components/dashboard/chart-lazy";
 import { UpcomingInterviewItem } from "@/components/dashboard/upcoming-interview-item";
 import { RecentApplicationsTable } from "@/components/dashboard/recent-applications-table";
+import { DashboardActions } from "@/components/dashboard/dashboard-actions";
+import { ProgressTracker } from "@/components/dashboard/progress-tracker";
+import { DashboardInsights } from "@/components/dashboard/dashboard-insights";
 import {
   stats,
   upcomingInterviews,
@@ -64,6 +67,40 @@ export default function DashboardPage() {
                 <UpcomingInterviewItem key={iv.id} interview={iv} />
               ))}
             </ul>
+          </div>
+        </div>
+
+        {/* Quick Actions & Progress */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <DashboardActions />
+          <ProgressTracker />
+        </div>
+
+        {/* AI Insights */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <DashboardInsights />
+          </div>
+          <div className="flex flex-col rounded-xl border border-border bg-card p-5">
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                Today's Focus
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
+                  <span>Complete Morgan Stanley prep</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                  <span>Review DCF model scenarios</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Send 2 networking follow-ups</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Mock Interview Agent Database Schema
+// Comprehensive database structure for IBD career prep platform
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,231 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User Management
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  name      String?
+  name      String
+  initials  String
+  plan      String   @default("Free")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  applications     Application[]
+  interviews       Interview[]
+  practiceScores   PracticeScore[]
+  courseProgress   CourseProgress[]
+  networkingContacts NetworkingContact[]
+  chatSessions     ChatSession[]
+
+  @@map("users")
 }
 
-model Post {
+// Job Applications Tracking
+model Application {
+  id          String            @id @default(cuid())
+  userId      String
+  company     String
+  department  String
+  position    String?
+  status      ApplicationStatus @default(APPLIED)
+  appliedDate DateTime          @default(now())
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  user        User              @relation(fields: [userId], references: [id])
+  interviews  Interview[]
+
+  @@map("applications")
+}
+
+enum ApplicationStatus {
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+// Interview Management
+model Interview {
+  id             String        @id @default(cuid())
+  userId         String
+  applicationId  String?
+  company        String
+  interviewType  InterviewType @default(BEHAVIORAL)
+  role           String
+  scheduledDate  DateTime
+  scheduledTime  String
+  status         InterviewStatus @default(SCHEDULED)
+  notes          String?
+  feedback       String?
+  score          Float?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  user           User          @relation(fields: [userId], references: [id])
+  application    Application?  @relation(fields: [applicationId], references: [id])
+
+  @@map("interviews")
+}
+
+enum InterviewType {
+  BEHAVIORAL
+  TECHNICAL
+  CASE_STUDY
+  PE_INTERVIEW
+  RESTRUCTURING
+}
+
+enum InterviewStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+}
+
+// Practice & Learning
+model PracticeScore {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  userId    String
+  category  String   // "technical", "behavioral", "case_study"
+  score     Float
+  maxScore  Float    @default(100)
+  date      DateTime @default(now())
+  notes     String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("practice_scores")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String   // "technical", "behavioral", "market_knowledge"
+  difficulty  String   @default("BEGINNER") // "BEGINNER", "INTERMEDIATE", "ADVANCED"
+  duration    Int?     // minutes
+  content     String?  // JSON or text content
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  progress    CourseProgress[]
+
+  @@map("courses")
+}
+
+model CourseProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  courseId     String
+  status       String   @default("NOT_STARTED") // "NOT_STARTED", "IN_PROGRESS", "COMPLETED"
+  progress     Float    @default(0) // 0-100
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id])
+  course       Course   @relation(fields: [courseId], references: [id])
+
+  @@unique([userId, courseId])
+  @@map("course_progress")
+}
+
+// Weekly Activity Tracking
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  hours     Float    @default(0)
+  sessions  Int      @default(0)
+  category  String   // "practice", "learning", "mock_interview", "networking"
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+// Networking & Outreach
+model NetworkingContact {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  company     String
+  position    String?
+  email       String?
+  linkedin    String?
+  status      String   @default("REACHED_OUT") // "REACHED_OUT", "RESPONDED", "MEETING_SCHEDULED", "NO_RESPONSE"
+  lastContact DateTime @default(now())
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("networking_contacts")
+}
+
+// AI Chat Sessions
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [id])
+  messages  ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  sessionId   String
+  role        String      // "user", "assistant"
+  content     String
+  timestamp   DateTime    @default(now())
+
+  // Relations
+  session     ChatSession @relation(fields: [sessionId], references: [id])
+
+  @@map("chat_messages")
+}
+
+// Market Insights & Data
+model MarketInsight {
+  id          String   @id @default(cuid())
+  title       String
+  category    String   // "league_tables", "hiring_trends", "salary_data"
+  content     String   // JSON data
+  dateRange   String?  // "Q1 2024", "2024"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("market_insights")
+}
+
+// Resume Versions
+model Resume {
+  id        String   @id @default(cuid())
+  userId    String
+  version   String   @default("v1")
+  content   String   // JSON or text
+  feedback  String?
+  score     Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("resumes")
 }
