@@ -1,6 +1,8 @@
-# 🎯 Mock Interview Agent - AI-Powered Banking Interview Prep
+# 🎯 Som AI - Investment Banking Division Interview Prep Platform
 
 A comprehensive, full-stack Next.js application designed specifically for Investment Banking interview preparation. Built with React 19, TypeScript, and modern web technologies.
+
+**Developer**: [gunal200516](https://github.com/gunal200516)
 
 ![Mock Interview Agent Dashboard](./public/rebuilt-dashboard.png)
 
@@ -291,6 +293,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 **Acknowledgments**
 
+- **Developer**: [@gunal200516](https://github.com/gunal200516)
 - Built with [Next.js](https://nextjs.org/) and [React](https://react.dev/)
 - UI components from [ShadCN/UI](https://ui.shadcn.com/)
 - Icons from [Lucide React](https://lucide.dev/)
