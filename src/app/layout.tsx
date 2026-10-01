@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,18 +15,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Cook'd AI — IBD Career Prep Dashboard",
+  title: "Som AI — IBD Career Prep Dashboard",
   description:
-    "Cook'd AI — your IBD prep pipeline at a glance. Track applications, interviews, practice scores, and prep courses.",
+    "Som AI — your IBD prep pipeline at a glance. Track applications, interviews, practice scores, and prep courses.",
   keywords: [
-    "Cook'd AI",
+    "Som AI",
     "IBD",
     "investment banking",
     "career prep",
     "interview prep",
     "application tracker",
   ],
-  authors: [{ name: "Cook'd AI" }],
+  authors: [{ name: "Som AI" }],
 };
 
 export default function RootLayout({
@@ -40,6 +41,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster />
+        <Sonner />
       </body>
     </html>
   );

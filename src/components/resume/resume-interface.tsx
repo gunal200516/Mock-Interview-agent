@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { 
   FileText, 
   Upload, 
@@ -15,7 +16,8 @@ import {
   AlertCircle,
   Target,
   Zap,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 
 interface ResumeFeedback {
@@ -86,6 +88,68 @@ export function ResumeInterface() {
   const [resumeText, setResumeText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastAction, setLastAction] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = [
+      'text/plain',
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword' // .doc
+    ];
+
+    if (!validTypes.includes(file.type)) {
+      toast.error('Invalid file type. Please upload a PDF, DOCX, DOC, or TXT file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('File size exceeds 5MB. Please upload a smaller file.');
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // For PDF and DOCX, we'll extract text content
+      if (file.type === 'text/plain') {
+        const text = await file.text();
+        setResumeText(text);
+        toast.success('Resume uploaded successfully!');
+      } else if (file.type === 'application/pdf') {
+        // In a real implementation, you'd use a PDF parsing library
+        // For now, we'll show a placeholder
+        toast.info('PDF parsing: This would extract text from your PDF resume.');
+        setResumeText(`[PDF Content from ${file.name}]\n\nIn production, this would contain the extracted text from your PDF resume using a library like pdf-parse or PDF.js.\n\nFor now, please paste your resume text directly into the textarea.`);
+      } else {
+        // DOCX/DOC files
+        toast.info('Document parsing: This would extract text from your document.');
+        setResumeText(`[Document Content from ${file.name}]\n\nIn production, this would contain the extracted text from your Word document using a library like mammoth or docx.\n\nFor now, please paste your resume text directly into the textarea.`);
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      toast.error('Failed to upload file. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleAnalyze = () => {
     setIsAnalyzing(true);
@@ -93,13 +157,138 @@ export function ResumeInterface() {
     setTimeout(() => {
       setIsAnalyzing(false);
       setShowFeedback(true);
+      toast.success('Resume analysis complete!');
     }, 2000);
   };
 
   const handleOptimize = () => {
-    // AI optimization simulation
-    const optimizedText = resumeText + "\n\n[AI-optimized content would appear here with improved bullet points, stronger action verbs, and better quantification]";
-    setResumeText(optimizedText);
+    console.log('Optimize button clicked');
+    setLastAction('Optimizing bullet points...');
+    
+    if (!resumeText.trim()) {
+      toast.error('No resume content to optimize.');
+      setLastAction('Error: No content');
+      return;
+    }
+    
+    setIsProcessing(true);
+    toast.info('Optimizing bullet points...');
+    
+    // Simulate AI optimization
+    setTimeout(() => {
+      const optimizedText = resumeText + "\n\n[AI-OPTIMIZED CONTENT]\n• Spearheaded 15+ M&A transactions totaling $2.3B in enterprise value\n• Executed comprehensive DCF and LBO models achieving 95% accuracy vs. actual deal terms\n• Delivered 20+ pitch decks to C-suite executives resulting in 8 closed mandates";
+      setResumeText(optimizedText);
+      setIsProcessing(false);
+      setLastAction('✅ Bullet points optimized!');
+      toast.success('Bullet points optimized with quantifiable achievements!');
+    }, 1500);
+  };
+
+  const handleExportPDF = () => {
+    if (!resumeText.trim()) {
+      toast.error('No resume content to export.');
+      return;
+    }
+
+    // Create a text file download (in production, this would generate a PDF)
+    const blob = new Blob([resumeText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resume-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Resume exported! In production, this would be a formatted PDF.');
+  };
+
+  const handleEnhanceActionVerbs = () => {
+    console.log('Enhance action verbs clicked');
+    setLastAction('Enhancing action verbs...');
+    
+    if (!resumeText.trim()) {
+      toast.error('No resume content to enhance.');
+      setLastAction('Error: No content');
+      return;
+    }
+    
+    setIsProcessing(true);
+    toast.info('Analyzing and enhancing action verbs...');
+    
+    // Simulate enhancement
+    setTimeout(() => {
+      // Replace common weak verbs with stronger alternatives
+      let enhanced = resumeText
+        .replace(/\bhelped\b/gi, 'facilitated')
+        .replace(/\bdid\b/gi, 'executed')
+        .replace(/\bmade\b/gi, 'developed')
+        .replace(/\bworked on\b/gi, 'spearheaded');
+      
+      setResumeText(enhanced);
+      setIsProcessing(false);
+      setLastAction('✅ Action verbs enhanced!');
+      toast.success('Action verbs enhanced! Weak verbs replaced with stronger alternatives.');
+    }, 1500);
+  };
+
+  const handleBankingLanguageCheck = () => {
+    console.log('Banking language check clicked');
+    setLastAction('Checking banking language...');
+    
+    if (!resumeText.trim()) {
+      toast.error('No resume content to check.');
+      setLastAction('Error: No content');
+      return;
+    }
+    
+    setIsProcessing(true);
+    toast.info('Analyzing banking terminology and industry language...');
+    
+    setTimeout(() => {
+      const text = resumeText.toLowerCase();
+      const bankingTerms = ['m&a', 'dcf', 'lbo', 'valuation', 'pitch deck', 'due diligence', 'financial modeling'];
+      const foundTerms = bankingTerms.filter(term => text.includes(term));
+      
+      setIsProcessing(false);
+      if (foundTerms.length > 3) {
+        setLastAction(`✅ Strong banking language! Found ${foundTerms.length} key terms`);
+        toast.success(`Strong banking language! Found ${foundTerms.length} key terms.`);
+      } else {
+        setLastAction(`⚠️ Found ${foundTerms.length}/7 key terms`);
+        toast.warning(`Consider adding more IBD terms. Found ${foundTerms.length}/7 key terms.`);
+      }
+    }, 1500);
+  };
+
+  const handleATSOptimization = () => {
+    console.log('ATS optimization clicked');
+    setLastAction('Optimizing for ATS...');
+    
+    if (!resumeText.trim()) {
+      toast.error('No resume content to optimize.');
+      setLastAction('Error: No content');
+      return;
+    }
+    
+    setIsProcessing(true);
+    toast.info('Optimizing for ATS (Applicant Tracking Systems)...');
+    
+    setTimeout(() => {
+      const wordCount = resumeText.split(/\s+/).length;
+      const hasKeywords = resumeText.toLowerCase().includes('investment banking') || 
+                         resumeText.toLowerCase().includes('financial');
+      
+      setIsProcessing(false);
+      if (wordCount > 100 && hasKeywords) {
+        setLastAction('✅ ATS Score: 87/100 - Well optimized!');
+        toast.success('ATS Score: 87/100 - Resume is well-optimized for ATS systems!');
+      } else {
+        setLastAction('⚠️ ATS Score: 62/100 - Needs improvement');
+        toast.warning('ATS Score: 62/100 - Add more relevant keywords and details.');
+      }
+    }, 1500);
   };
 
   const getFeedbackIcon = (type: ResumeFeedback['type']) => {
@@ -206,9 +395,25 @@ export function ResumeInterface() {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" className="flex-1">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload File
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.pdf,.doc,.docx"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={handleUploadClick}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    {isUploading ? 'Uploading...' : 'Upload File'}
                   </Button>
                   <Button 
                     onClick={handleAnalyze}
@@ -216,7 +421,7 @@ export function ResumeInterface() {
                     className="flex-1"
                   >
                     {isAnalyzing ? (
-                      <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Sparkles className="h-4 w-4 mr-2" />
                     )}
@@ -238,47 +443,82 @@ export function ResumeInterface() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Status Indicator */}
+                {lastAction && (
+                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                    <div className="flex items-center gap-2">
+                      {isProcessing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : null}
+                      <span>{lastAction}</span>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-3">
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
                     onClick={handleOptimize}
-                    disabled={!resumeText.trim()}
+                    disabled={!resumeText.trim() || isProcessing}
                   >
-                    <Target className="h-4 w-4 mr-2" />
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Target className="h-4 w-4 mr-2" />
+                    )}
                     Optimize Bullet Points
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
-                    disabled={!resumeText.trim()}
+                    onClick={handleEnhanceActionVerbs}
+                    disabled={!resumeText.trim() || isProcessing}
                   >
-                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
                     Enhance Action Verbs
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
-                    disabled={!resumeText.trim()}
+                    onClick={handleBankingLanguageCheck}
+                    disabled={!resumeText.trim() || isProcessing}
                   >
-                    <FileText className="h-4 w-4 mr-2" />
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4 mr-2" />
+                    )}
                     Banking Language Check
                   </Button>
                   
                   <Button 
                     variant="outline" 
                     className="w-full justify-start"
-                    disabled={!resumeText.trim()}
+                    onClick={handleATSOptimization}
+                    disabled={!resumeText.trim() || isProcessing}
                   >
-                    <Eye className="h-4 w-4 mr-2" />
+                    {isProcessing ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Eye className="h-4 w-4 mr-2" />
+                    )}
                     ATS Optimization
                   </Button>
                 </div>
 
                 <div className="pt-4 border-t">
-                  <Button className="w-full">
+                  <Button 
+                    className="w-full"
+                    onClick={handleExportPDF}
+                    disabled={!resumeText.trim()}
+                  >
                     <Download className="h-4 w-4 mr-2" />
                     Export PDF
                   </Button>

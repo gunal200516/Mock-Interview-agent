@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,22 +172,7 @@ export function ChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    // Load chat history on component mount
-    loadChatHistory();
-  }, []);
-
-  useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    if (scrollAreaRef.current) {
-      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
-      }
-    }
-  }, [messages]);
-
-  const loadChatHistory = async () => {
+  const loadChatHistory = useCallback(async () => {
     try {
       const response = await api.getChatHistory(userId);
       if (response.data && response.data.messages) {
@@ -217,7 +202,22 @@ export function ChatInterface() {
         timestamp: new Date(),
       }]);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    // Load chat history on component mount
+    loadChatHistory();
+  }, [loadChatHistory]);
+
+  useEffect(() => {
+    // Auto-scroll to bottom when new messages arrive
+    if (scrollAreaRef.current) {
+      const scrollElement = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages]);
 
   const handleSendMessage = async (messageText?: string) => {
     const text = messageText || inputMessage.trim();

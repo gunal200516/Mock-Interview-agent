@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import { 
   Bot, 
   Send,
@@ -19,7 +20,8 @@ import {
   MessageSquare,
   Clock,
   Target,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
 
 interface Contact {
@@ -150,10 +152,21 @@ export function NetworkingInterface() {
   });
 
   const handleGenerateEmail = () => {
+    if (!selectedTemplate) {
+      toast.error('Please select an email template first.');
+      return;
+    }
+
+    if (!personalizationData.yourName || !personalizationData.targetName) {
+      toast.warning('Please provide at least your name and target name for better personalization.');
+    }
+
     setIsGenerating(true);
+    toast.info('Generating personalized email...');
+    
     // Simulate AI generation
     setTimeout(() => {
-      const template = selectedTemplate || emailTemplates[0];
+      const template = selectedTemplate;
       let personalizedContent = template.content;
       
       // Simple personalization simulation
@@ -162,12 +175,42 @@ export function NetworkingInterface() {
         .replace(/\[Company\]/g, personalizationData.targetCompany || '[Company]')
         .replace(/\[Your Name\]/g, personalizationData.yourName || '[Your Name]')
         .replace(/\[University\]/g, personalizationData.yourSchool || '[University]')
-        .replace(/\[Year\/Major\]/g, `${personalizationData.yourMajor} student` || '[Year/Major]')
-        .replace(/\[Specific Group\]/g, personalizationData.targetGroup || '[Specific Group]');
+        .replace(/\[Year\/Major\]/g, personalizationData.yourMajor ? `${personalizationData.yourMajor} student` : '[Year/Major]')
+        .replace(/\[Specific Group\]/g, personalizationData.targetGroup || '[Specific Group]')
+        .replace(/\[Target Title\]/g, personalizationData.targetTitle || '[Title]');
+
+      // Add custom instructions context if provided
+      if (customPrompt.trim()) {
+        personalizedContent += `\n\n[Note: This email incorporates your custom instructions: "${customPrompt}"]`;
+      }
 
       setGeneratedEmail(personalizedContent);
       setIsGenerating(false);
+      toast.success('Email generated successfully!');
     }, 2000);
+  };
+
+  const handleCopyEmail = () => {
+    if (!generatedEmail) {
+      toast.error('No email to copy.');
+      return;
+    }
+
+    navigator.clipboard.writeText(generatedEmail).then(() => {
+      toast.success('Email copied to clipboard!');
+    }).catch(() => {
+      toast.error('Failed to copy email.');
+    });
+  };
+
+  const handleRegenerateEmail = () => {
+    if (!selectedTemplate) {
+      toast.error('Please select a template first.');
+      return;
+    }
+    
+    toast.info('Regenerating with variations...');
+    handleGenerateEmail();
   };
 
   const getStatusColor = (status: Contact['status']) => {
@@ -336,12 +379,25 @@ export function NetworkingInterface() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={handleCopyEmail}
+                      >
                         <Copy className="h-4 w-4 mr-2" />
                         Copy Email
                       </Button>
-                      <Button variant="outline" className="flex-1">
-                        <RefreshCw className="h-4 w-4 mr-2" />
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={handleRegenerateEmail}
+                        disabled={isGenerating}
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
                         Regenerate
                       </Button>
                     </div>
@@ -368,7 +424,11 @@ export function NetworkingInterface() {
                 Track your networking outreach and follow-ups
               </p>
             </div>
-            <Button>
+            <Button
+              onClick={() => {
+                toast.info('Add Contact modal would open here. Feature coming soon!');
+              }}
+            >
               <Users className="h-4 w-4 mr-2" />
               Add Contact
             </Button>
@@ -403,17 +463,39 @@ export function NetworkingInterface() {
                     </div>
                   </div>
                   <div className="mt-4 flex items-center gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        if (contact.email) {
+                          window.location.href = `mailto:${contact.email}`;
+                          toast.success(`Opening email to ${contact.name}`);
+                        }
+                      }}
+                    >
                       <Mail className="h-3 w-3 mr-1" />
                       Email
                     </Button>
                     {contact.phone && (
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(contact.phone!);
+                          toast.success(`Phone number copied: ${contact.phone}`);
+                        }}
+                      >
                         <Phone className="h-3 w-3 mr-1" />
                         Call
                       </Button>
                     )}
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        toast.info(`Follow-up reminder set for ${contact.name}`);
+                      }}
+                    >
                       <MessageSquare className="h-3 w-3 mr-1" />
                       Follow Up
                     </Button>
@@ -442,7 +524,10 @@ export function NetworkingInterface() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setSelectedTemplate(template)}
+                      onClick={() => {
+                        setSelectedTemplate(template);
+                        toast.success(`Template "${template.type.replace('_', ' ')}" selected! Go to Email Generator tab to personalize.`);
+                      }}
                     >
                       Use Template
                     </Button>

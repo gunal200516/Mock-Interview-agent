@@ -68,7 +68,7 @@ export function StubPage({
             Coming soon
           </div>
           <h2 className="text-xl font-semibold text-foreground">
-            This module is part of the Cook&apos;d AI roadmap.
+            This module is part of the Som AI roadmap.
           </h2>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
             The dashboard you just came from is fully wired up with mock data —

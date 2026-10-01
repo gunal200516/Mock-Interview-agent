@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, { hours: number; sessions: number }>);
 
     // Generate 7 days of data
-    const weeklyData = [];
+    const weeklyData: Array<{ day: string; hours: number; sessions: number }> = [];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();

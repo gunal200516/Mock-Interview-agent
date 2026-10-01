@@ -39,7 +39,7 @@ export function Sidebar() {
         </div>
         <div className="flex flex-col leading-tight">
           <span className="text-sm font-semibold text-foreground">
-            Cook&apos;d AI
+            Som AI
           </span>
           <span className="text-[11px] text-muted-foreground">
             IBD Prep Platform

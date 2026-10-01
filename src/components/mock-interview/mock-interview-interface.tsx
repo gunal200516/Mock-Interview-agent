@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -138,6 +138,10 @@ export function MockInterviewInterface() {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [responses, setResponses] = useState<string[]>([]);
+  const [recordedResponses, setRecordedResponses] = useState<{questionId: string, response: string, duration: number}[]>([]);
+  const [totalInterviewTime, setTotalInterviewTime] = useState(0);
+  const [questionStartTime, setQuestionStartTime] = useState<number | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const getTypeColor = (type: MockInterview['type']) => {
     switch (type) {
@@ -166,14 +170,48 @@ export function MockInterviewInterface() {
 
   const beginInterview = () => {
     setInterviewStarted(true);
-    // Start timer here
+    setQuestionStartTime(Date.now());
+    // Start countdown timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    timerRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const nextQuestion = () => {
+    // Record the time spent on current question
+    if (questionStartTime) {
+      const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+      setTotalInterviewTime(prev => prev + timeSpent);
+      
+      // Record the response
+      const currentQuestion = currentQuestions[currentQuestionIndex];
+      setRecordedResponses(prev => [...prev, {
+        questionId: currentQuestion.id,
+        response: isRecording ? 'Recorded response' : 'No response recorded',
+        duration: timeSpent
+      }]);
+    }
+    
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    
     if (currentQuestionIndex < currentQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setTimeRemaining(currentQuestions[currentQuestionIndex + 1]?.timeLimit || 120);
       setIsRecording(false);
+      setInterviewStarted(false);
+      setQuestionStartTime(null);
     } else {
       // Interview complete
       setCurrentMode('results');
@@ -182,8 +220,20 @@ export function MockInterviewInterface() {
 
   const toggleRecording = () => {
     setIsRecording(!isRecording);
+    if (!isRecording && !questionStartTime) {
+      setQuestionStartTime(Date.now());
+    }
     // Voice recording logic would go here
   };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -322,6 +372,14 @@ export function MockInterviewInterface() {
   }
 
   if (currentMode === 'results') {
+    // Calculate actual score based on responses
+    const responseScore = recordedResponses.length > 0 
+      ? Math.round((recordedResponses.filter(r => r.response !== 'No response recorded').length / currentQuestions.length) * 100)
+      : 0;
+    
+    const totalMinutes = Math.floor(totalInterviewTime / 60);
+    const totalSeconds = totalInterviewTime % 60;
+    
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <Card>
@@ -339,7 +397,7 @@ export function MockInterviewInterface() {
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-500">85%</div>
+                    <div className="text-2xl font-bold text-green-500">{responseScore}%</div>
                     <p className="text-xs text-muted-foreground">Overall Score</p>
                   </div>
                 </CardContent>
@@ -347,7 +405,7 @@ export function MockInterviewInterface() {
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-500">{currentQuestions.length}</div>
+                    <div className="text-2xl font-bold text-blue-500">{recordedResponses.length}/{currentQuestions.length}</div>
                     <p className="text-xs text-muted-foreground">Questions Answered</p>
                   </div>
                 </CardContent>
@@ -355,7 +413,9 @@ export function MockInterviewInterface() {
               <Card>
                 <CardContent className="pt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-500">42min</div>
+                    <div className="text-2xl font-bold text-purple-500">
+                      {totalMinutes}m {totalSeconds}s
+                    </div>
                     <p className="text-xs text-muted-foreground">Total Time</p>
                   </div>
                 </CardContent>
@@ -365,30 +425,64 @@ export function MockInterviewInterface() {
             <div className="space-y-4">
               <h3 className="font-medium">Performance Feedback</h3>
               <div className="space-y-3">
-                <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-green-400">Strong Technical Knowledge</p>
-                    <p className="text-muted-foreground">Your DCF explanation was comprehensive and well-structured</p>
+                {recordedResponses.length === currentQuestions.length ? (
+                  <div className="flex items-start gap-3 p-3 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-green-400">Complete Interview</p>
+                      <p className="text-muted-foreground">You answered all {currentQuestions.length} questions</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 bg-amber-500/10 rounded-lg">
-                  <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-amber-400">Improve Storytelling</p>
-                    <p className="text-muted-foreground">Try to be more concise in behavioral responses - use STAR method</p>
+                ) : (
+                  <div className="flex items-start gap-3 p-3 bg-amber-500/10 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-amber-400">Incomplete Responses</p>
+                      <p className="text-muted-foreground">Some questions were skipped without recording</p>
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {recordedResponses.some(r => r.duration > 180) && (
+                  <div className="flex items-start gap-3 p-3 bg-amber-500/10 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-amber-400">Time Management</p>
+                      <p className="text-muted-foreground">Try to be more concise - aim for 60-90 seconds per question</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <h4 className="text-sm font-medium">Question-by-Question Breakdown</h4>
+                {recordedResponses.map((response, index) => (
+                  <div key={response.questionId} className="flex items-center justify-between p-2 border rounded-lg">
+                    <span className="text-sm">Question {index + 1}</span>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span>{Math.floor(response.duration / 60)}m {response.duration % 60}s</span>
+                      {response.response !== 'No response recorded' ? (
+                        <Badge variant="outline" className="bg-green-500/10 text-green-400">Answered</Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-red-500/10 text-red-400">Skipped</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="flex gap-2 mt-6">
-              <Button onClick={() => setCurrentMode('selection')} variant="outline">
+              <Button onClick={() => {
+                setCurrentMode('selection');
+                setRecordedResponses([]);
+                setTotalInterviewTime(0);
+              }} variant="outline">
                 Back to Interviews
               </Button>
-              <Button>
+              <Button onClick={() => startInterview(selectedInterview!)}>
                 <TrendingUp className="h-4 w-4 mr-2" />
-                View Detailed Analysis
+                Retry Interview
               </Button>
             </div>
           </CardContent>

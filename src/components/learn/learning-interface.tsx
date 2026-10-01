@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Star
 } from 'lucide-react';
+import { CoursePlayerModal } from '@/components/learn/course-player-modal';
 
 interface Course {
   id: string;
@@ -134,14 +135,31 @@ const flashCards: FlashCard[] = [
 ];
 
 export function LearningInterface() {
+  const [courseList, setCourseList] = useState<Course[]>(courses);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentFlashCard, setCurrentFlashCard] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [quizMode, setQuizMode] = useState(false);
 
-  const completedCourses = courses.filter(c => c.status === 'completed').length;
-  const totalCourses = courses.length;
+  const completedCourses = courseList.filter(c => c.status === 'completed').length;
+  const totalCourses = courseList.length;
   const overallProgress = (completedCourses / totalCourses) * 100;
+
+  const handleUpdateCourseProgress = (courseId: string, newProgress: number, isCompleted: boolean) => {
+    setCourseList((prev) =>
+      prev.map((c) => {
+        if (c.id === courseId) {
+          return {
+            ...c,
+            progress: newProgress,
+            status: isCompleted ? 'completed' : newProgress > 0 ? 'in_progress' : 'not_started',
+          };
+        }
+        return c;
+      })
+    );
+  };
 
   const getCategoryIcon = (category: Course['category']) => {
     switch (category) {
@@ -248,7 +266,7 @@ export function LearningInterface() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {courses.map((course) => (
+                {courseList.map((course) => (
                   <Card key={course.id} className="hover:bg-accent/50 transition-colors">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between">
@@ -298,7 +316,10 @@ export function LearningInterface() {
                           size="sm" 
                           className="w-full"
                           variant={course.status === 'completed' ? 'outline' : 'default'}
-                          onClick={() => setSelectedCourse(course)}
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setIsModalOpen(true);
+                          }}
                         >
                           {course.status === 'not_started' && (
                             <>
@@ -412,6 +433,13 @@ export function LearningInterface() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <CoursePlayerModal
+        courseId={selectedCourse?.id || null}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onUpdateCourseProgress={handleUpdateCourseProgress}
+      />
     </div>
   );
 }
